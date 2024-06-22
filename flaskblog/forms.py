@@ -13,7 +13,7 @@ class RegistrationForm(FlaskForm):
     # Custom validation for Email and Username
     
     def validate_username(self, username):
-        user = User.query.filter_by(username=username).first()
+        user = User.query.filter_by(username=username.data).first()
 
         if user:
             raise ValidationError('Username is taken, try a new one')
