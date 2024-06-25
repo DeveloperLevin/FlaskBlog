@@ -1,5 +1,5 @@
 from flask import render_template, flash, redirect, url_for, request
-from flaskblog.forms import RegistrationForm, LoginForm, UpdateForm
+from flaskblog.forms import RegistrationForm, LoginForm, UpdateForm, PostForm
 from flaskblog.models import User, Post
 from flaskblog import app, db, bcrypt
 from flask_login import login_user, current_user, logout_user, login_required
@@ -22,8 +22,6 @@ posts = [
         'date_posted': 'April 21, 2024'
     }
 ]
-
-
 
 @app.route("/")
 @app.route("/home")
@@ -106,3 +104,16 @@ def account():
         form.email.data = current_user.email
         return redirect(url_for('account')) # this makes the browser send a get request instead of the default post request when submitting a form
     return render_template('account.html', image_file=image_file, form=form)
+
+
+@app.route("/post/new", methods=['GET', 'POST'])
+@login_required
+def new_post():
+    form = PostForm()
+    if form.validate__on_submit():
+        post = Post(title=form.title.data, content=form.content.data)
+        db.session.add(post)
+        db.session.commit()
+        flash('Post Uploaded', category='Success')
+        return redirect('home')
+    return render_template('post.html', form=form)
