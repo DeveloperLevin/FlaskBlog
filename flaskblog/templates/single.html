@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block title %}Post{% endblock title %}
+
+{% block content %}
+    <article class="media content-section">
+        <img src="{{ url_for('static', filename='images/' + current_user.image_file) }}" alt="user profile picture" class="rounded-circle article-img">
+        <div class="media-body">
+            <div class="article-metadata">
+                <a class="mr-2" href="#">{{ post.author.username }}</a>
+                <small class="text-muted">{{ post.date_posted.strftime('%Y-%m-%d') }}</small>
+            </div>
+            <h2 cclass="article-title">{{ post.title }}</h2>
+            <p class="article-content">{{ post.content }}</p>
+        </div>
+    </article>
+{% endblock %}
