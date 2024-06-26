@@ -3,7 +3,7 @@
 {% block title %}Home{% endblock %}
 
 {% block content %}
-    {% for post in posts %}
+    {% for post in posts.items %}
         <article class="media-body content-section">
             <img src="{{ url_for('static', filename='images/' + post.author.image_file) }}" alt="user profile picture" class="rounded-circle article-img">
             <div class="article-metadata">
@@ -14,4 +14,18 @@
             <p class="article-content">{{ post.content }}</p>
         </article>
     {% endfor %}
+    <!--The right_current includes the current page hence it is set as 2-->
+    <center>
+        {% for page_num in posts.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}
+            {% if page_num %}
+                {% if posts.page == page_num %}
+                    <a href="{{ url_for('home', page=page_num) }}" class="btn btn-info mb-4">{{ page_num }}</a>
+                {% else %}
+                    <a href="{{ url_for('home', page=page_num) }}" class="btn btn-outline-info mb-4">{{ page_num }}</a>
+                {% endif %}
+            {% else %}
+                ...
+            {% endif %}
+        {% endfor %}
+    </center>
 {% endblock %}

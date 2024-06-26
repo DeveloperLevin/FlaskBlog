@@ -1,4 +1,4 @@
-from flask import render_template, flash, redirect, url_for, request
+from flask import render_template, flash, redirect, url_for, request, abort
 from flaskblog.forms import RegistrationForm, LoginForm, UpdateForm, PostForm
 from flaskblog.models import User, Post
 from flaskblog import app, db, bcrypt
@@ -7,25 +7,13 @@ from PIL import Image
 import secrets
 import os
 
-
-posts = [
-    {
-        'author': 'Corey Schafer',
-        'title': 'Blog Post 1',
-        'content': 'First post content',
-        'date_posted': 'April 21, 2018'
-    },
-    {
-        'author': 'Levin Moras',
-        'title': 'Blog Post 2',
-        'content': 'Second post content',
-        'date_posted': 'April 21, 2024'
-    }
-]
-
 @app.route("/")
 @app.route("/home")
 def home():
+    # Paginate this query
+    page = request.args.get('page', 1, type=int) # gets the page number from the URL
+    #returns an object with posts ordered from most recent to old using order_by
+    posts = Post.query.order_by(Post.date_posted.desc()).paginate(page=page, per_page=4)
     return render_template('home.html', posts=posts)
 
 
@@ -97,7 +85,9 @@ def account():
         current_user.username = form.username.data
         current_user.email = form.email.data
         db.session.commit()
+
         flash('Account Updated', category='Success')
+    
     elif request.method == 'GET':
         # when a get request is sent, it populates the form fields with current user's credentials
         form.username.data = current_user.username
@@ -110,10 +100,50 @@ def account():
 @login_required
 def new_post():
     form = PostForm()
-    if form.validate__on_submit():
-        post = Post(title=form.title.data, content=form.content.data)
+
+    if form.validate_on_submit():
+        post = Post(title=form.title.data, content=form.content.data, author=current_user)
         db.session.add(post)
         db.session.commit()
-        flash('Post Uploaded', category='Success')
-        return redirect('home')
-    return render_template('post.html', form=form)
+        flash('Post Uploaded', category='success')
+        return redirect(url_for('home'))
+    return render_template('post.html', form=form, title='Create post')
+
+@app.route("/post/<int:post_id>/update>", methods=['GET', 'POST'])
+@login_required
+def update(post_id):
+    post = Post.query.get_or_404(post_id)
+    
+    if post.author != current_user:
+        abort(403) # Forbidden Route
+
+    form = PostForm()
+    if form.validate_on_submit():
+        post.title = form.title.data
+        post.content = form.content.data
+        db.session.commit()
+        flash('Updated Post Successfully', category='Success')
+        return redirect(url_for('post', post_id=post.id))
+    elif request.method == 'GET':
+        form.title.data = post.title
+        form.content.data = post.content
+    return render_template('post.html', form=form, title='update')
+
+#route to access individual posts made by users
+@app.route("/post/<int:post_id>")
+def post(post_id):
+    post = Post.query.get_or_404(post_id)
+    return render_template('single.html', post=post)
+
+# Route to delte a users post
+@app.route("/post/<int:post_id>/delete", methods=['POST'])
+def delete_post(post_id):
+    post = Post.query.get_or_404(post_id)
+    if post.author != current_user:
+        abort(403)
+
+    db.session.delete(post)
+    db.session.commit()
+    flash('Your Post has been deleted', category='info')
+    return redirect(url_for('home'))
+
