@@ -61,14 +61,13 @@ def account():
         current_user.username = form.username.data
         current_user.email = form.email.data
         db.session.commit()
-
-        flash('Account Updated', category='Success')
+        flash('Account Updated', category='success')
+        return redirect(url_for('users.account')) # this makes the browser send a get request instead of the default post request when submitting a form
     
     elif request.method == 'GET':
         # when a get request is sent, it populates the form fields with current user's credentials
         form.username.data = current_user.username
-        form.email.data = current_user.email
-        return redirect(url_for('users.account')) # this makes the browser send a get request instead of the default post request when submitting a form
+        form.email.data = current_user.email    
     return render_template('account.html', image_file=image_file, form=form)
 
 

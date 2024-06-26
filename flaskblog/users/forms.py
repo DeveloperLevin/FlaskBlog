@@ -35,17 +35,15 @@ class UpdateForm(FlaskForm):
     email = StringField('Email', validators=[DataRequired(), Email()])
     #add picture from native device
     picture = FileField('Update Profile picture', validators=[FileAllowed(['jpg', 'png'])])
-    submit = SubmitField('Sign Up')
+    submit = SubmitField('Choose')
 
     # Custom validation for Email and Username
     def validate_username(self, username):
-        if username.data != current_user.username:
-            user = User.query.filter_by(username=username.data).first()
-        if user:
+        user = User.query.filter_by(username=username.data).first()
+        if username.data != current_user.username and user:
             raise ValidationError('Username is taken, try a new one')
 
     def validate_email(self, email):
-        if email.data != current_user.email:
-            user = User.query.filter_by(email=email.data).first()
-        if user:
+        user = User.query.filter_by(email=email.data).first()
+        if email.data != current_user.email and user:
             raise ValidationError('Email is not valid')

@@ -1,5 +1,6 @@
 from flaskblog import app
 from PIL import Image
+import secrets
 import os
 
 #adds the picture to the static directory
