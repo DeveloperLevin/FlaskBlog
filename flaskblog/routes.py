@@ -43,7 +43,7 @@ def login():
         user = User.query.filter_by(email=form.email.data).first()
         if user and bcrypt.check_password_hash(user.password, form.password.data):
             login_user(user, remember=form.remember.data)
-            next_page = request.args.get('next') #gets the next key vaalue from the url
+            next_page = request.args.get('next') #gets the next key value from the url
             flash("You've logged in", category='success')
             return redirect(next_page) if next_page else redirect(url_for('home')) #after loggin in the user, it redirects to the page the user was viewing before loggin in
         else:
@@ -100,7 +100,6 @@ def account():
 @login_required
 def new_post():
     form = PostForm()
-
     if form.validate_on_submit():
         post = Post(title=form.title.data, content=form.content.data, author=current_user)
         db.session.add(post)
@@ -112,7 +111,7 @@ def new_post():
 @app.route("/post/<int:post_id>/update>", methods=['GET', 'POST'])
 @login_required
 def update(post_id):
-    post = Post.query.get_or_404(post_id)
+    post = Post.query.get_or_404(post_id)# return a value if exists else 404 page is showed up
     
     if post.author != current_user:
         abort(403) # Forbidden Route
@@ -125,6 +124,7 @@ def update(post_id):
         flash('Updated Post Successfully', category='Success')
         return redirect(url_for('post', post_id=post.id))
     elif request.method == 'GET':
+        # autofill the fields with the values from the database
         form.title.data = post.title
         form.content.data = post.content
     return render_template('post.html', form=form, title='update')
@@ -140,10 +140,19 @@ def post(post_id):
 def delete_post(post_id):
     post = Post.query.get_or_404(post_id)
     if post.author != current_user:
-        abort(403)
+        abort(403) # error page loads up regarding restricted permission to perform actions
 
     db.session.delete(post)
     db.session.commit()
     flash('Your Post has been deleted', category='info')
     return redirect(url_for('home'))
 
+# Route to display all posts from an user
+@app.route("/user/<string:username>")
+def user_posts(username):
+    page = request.args.get('page', 1, type=int)
+    user = User.query.filter_by(username=username).first_or_404()
+    posts = Post.query.filter_by(author=user)\
+        .order_by(Post.date_posted.desc())\
+        .paginate(page=page, per_page=5)
+    return render_template('user_posts.html', posts=posts, user=user)
